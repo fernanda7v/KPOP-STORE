@@ -1,63 +1,78 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AccessEvent, AccessLog } from './entities/access-log.entity';
-
-interface RequestInfo {
-  ip?: string;
-  headers?: {
-    [key: string]: string | string[] | undefined;
-  };
-}
+import { AccessLog } from './entities/access-log.entity';
 
 @Injectable()
 export class AccessLogsService {
   constructor(
     @InjectRepository(AccessLog)
-    private readonly accessLogsRepository: Repository<AccessLog>,
+    private readonly accessLogRepository: Repository<AccessLog>,
   ) {}
 
-  private getIp(request: RequestInfo): string {
-    const forwardedFor = request.headers?.['x-forwarded-for'];
-
-    if (Array.isArray(forwardedFor)) {
-      return forwardedFor[0] ?? 'unknown';
-    }
-
-    if (typeof forwardedFor === 'string') {
-      return forwardedFor.split(',')[0].trim();
-    }
-
-    return request.ip ?? 'unknown';
+  create(data: any) {
+    const log = this.accessLogRepository.create(data);
+    return this.accessLogRepository.save(log);
   }
 
-  private getBrowser(request: RequestInfo): string {
-    const userAgent = request.headers?.['user-agent'];
+  async registerAccess(...args: any[]) {
+    const user = args[0];
+    const event = args[1];
 
-    if (Array.isArray(userAgent)) {
-      return userAgent[0] ?? 'unknown';
-    }
+    const request = args.find(
+      (arg) => arg && typeof arg === 'object' && (arg.headers || arg.ip),
+    );
 
-    return userAgent ?? 'unknown';
-  }
+    const ipFromArgs = typeof args[2] === 'string' ? args[2] : undefined;
+    const browserFromArgs = typeof args[3] === 'string' ? args[3] : undefined;
 
-  async registerAccess(userId: number, event: AccessEvent, request: RequestInfo) {
-    const accessLog = this.accessLogsRepository.create({
-      userId,
+    const forwardedFor = request?.headers?.['x-forwarded-for'];
+    const ip =
+      ipFromArgs ||
+      (Array.isArray(forwardedFor)
+        ? forwardedFor[0]
+        : forwardedFor?.split(',')[0]) ||
+      request?.ip ||
+      request?.socket?.remoteAddress ||
+      'No registrada';
+
+    const browser =
+      browserFromArgs ||
+      request?.headers?.['user-agent'] ||
+      'No registrado';
+
+    return this.create({
+      user: user?.id ? { id: user.id } : user,
       event,
-      ip: this.getIp(request),
-      browser: this.getBrowser(request),
+      ip,
+      browser,
     });
-
-    return this.accessLogsRepository.save(accessLog);
   }
 
   async findAll() {
-    return this.accessLogsRepository.find({
+    const logs = await this.accessLogRepository.find({
       relations: {
         user: true,
       },
-      order: { id: 'DESC' },
+      order: {
+        createdAt: 'DESC',
+      },
+      take: 100,
     });
+
+    return logs.map((log) => ({
+      id: log.id,
+      event: log.event,
+      ip: log.ip,
+      browser: log.browser,
+      createdAt: log.createdAt,
+      user: log.user
+        ? {
+            id: log.user.id,
+            name: log.user.name,
+            email: log.user.email,
+          }
+        : null,
+    }));
   }
 }
