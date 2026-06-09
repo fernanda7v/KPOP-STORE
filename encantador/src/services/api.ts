@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 export function getToken() {
   return localStorage.getItem('kpop-token');
@@ -28,7 +28,9 @@ export async function apiRequest<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+const response = await fetch(`${API_URL}${cleanEndpoint}`, {
     ...options,
     headers,
   });
@@ -50,7 +52,9 @@ export async function downloadFile(endpoint: string, filename: string) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+const response = await fetch(`${API_URL}${cleanEndpoint}`, {
     headers,
   });
 
