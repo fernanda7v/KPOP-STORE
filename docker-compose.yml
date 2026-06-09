@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: kpop_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: kpop_store_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./kpop-store-backend
+    container_name: kpop_backend
+    restart: always
+    depends_on:
+      - postgres
+    environment:
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 123456
+      DB_NAME: kpop_store_db
+      JWT_SECRET: mi_clave_secreta_kpop_store
+      JWT_EXPIRES_IN: 1d
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./encantador
+    container_name: kpop_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  postgres_data:

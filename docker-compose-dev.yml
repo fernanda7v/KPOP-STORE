@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: kpop_postgres_dev
+    restart: always
+    environment:
+      POSTGRES_DB: kpop_store_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  backend:
+    image: node:22-alpine
+    container_name: kpop_backend_dev
+    working_dir: /app
+    restart: always
+    depends_on:
+      - postgres
+    volumes:
+      - ./kpop-store-backend:/app
+      - backend_node_modules:/app/node_modules
+    environment:
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: 123456
+      DB_NAME: kpop_store_db
+      JWT_SECRET: mi_clave_secreta_kpop_store
+      JWT_EXPIRES_IN: 1d
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm run start:dev"
+
+  frontend:
+    image: node:22-alpine
+    container_name: kpop_frontend_dev
+    working_dir: /app
+    restart: always
+    depends_on:
+      - backend
+    volumes:
+      - ./encantador:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "8080:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  postgres_data_dev:
+  backend_node_modules:
+  frontend_node_modules:
