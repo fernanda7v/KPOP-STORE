@@ -7,6 +7,7 @@ export default function AdminMenu() {
       <NavLink to="/admin/products">Productos</NavLink>
       <NavLink to="/admin/orders">Pedidos</NavLink>
       <NavLink to="/admin/users">Usuarios</NavLink>
+      <NavLink to="/admin/logs" className="admin-menu-link">  Logs</NavLink>
     </div>
   );
 }

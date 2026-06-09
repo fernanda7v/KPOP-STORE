@@ -1,3 +1,4 @@
+import AdminLogs from './pages/AdminLogs';
 import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -15,6 +16,7 @@ import ProductDetail from './pages/ProductDetail';
 import Products from './pages/Products';
 import Register from './pages/Register';
 import Unauthorized from './pages/Unauthorized';
+
 
 export default function App() {
   return (
@@ -38,6 +40,7 @@ export default function App() {
           <Route path="admin/products" element={<AdminProducts />} />
           <Route path="admin/orders" element={<AdminOrders />} />
           <Route path="admin/users" element={<AdminUsers />} />
+          <Route path="admin/logs" element={<AdminLogs />} />
         </Route>
       </Route>
 
